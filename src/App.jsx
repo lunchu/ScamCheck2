@@ -11,7 +11,7 @@ const tabs = [
   { id: 'url', label: 'URL', icon: Link, description: 'Verify websites, links' },
 ]
 
-const DEFAULT_BASE_URL = 'https://api.anthropic.com'
+const BASE_URL = 'https://api.rdsec.trendmicro.com/prod/aiendpoint/v1'
 
 function App() {
   const [activeTab, setActiveTab] = useState('text')
@@ -19,18 +19,13 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [userApiKey, setUserApiKey] = useState('')
-  const [userBaseUrl, setUserBaseUrl] = useState('')
   const [showApiKeyInput, setShowApiKeyInput] = useState(false)
 
-  // Load credentials from localStorage on mount
+  // Load auth token from localStorage on mount
   useEffect(() => {
     const savedKey = localStorage.getItem('anthropic_auth_token')
-    const savedUrl = localStorage.getItem('anthropic_base_url')
     if (savedKey) {
       setUserApiKey(savedKey)
-    }
-    if (savedUrl) {
-      setUserBaseUrl(savedUrl)
     }
   }, [])
 
@@ -49,29 +44,22 @@ function App() {
     setError(null)
   }
 
-  const handleSaveCredentials = () => {
+  const handleSaveToken = () => {
     if (userApiKey.trim()) {
       localStorage.setItem('anthropic_auth_token', userApiKey.trim())
-      if (userBaseUrl.trim()) {
-        localStorage.setItem('anthropic_base_url', userBaseUrl.trim())
-      } else {
-        localStorage.removeItem('anthropic_base_url')
-      }
       setShowApiKeyInput(false)
     }
   }
 
-  const handleClearCredentials = () => {
+  const handleClearToken = () => {
     localStorage.removeItem('anthropic_auth_token')
-    localStorage.removeItem('anthropic_base_url')
     setUserApiKey('')
-    setUserBaseUrl('')
   }
 
-  // Use user-provided credentials only
+  // API config with hardcoded base URL
   const apiConfig = {
     apiKey: userApiKey,
-    baseUrl: userBaseUrl || DEFAULT_BASE_URL
+    baseUrl: BASE_URL
   }
   const isConfigured = !!apiConfig.apiKey
 
@@ -94,7 +82,7 @@ function App() {
               <button
                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-                title="API Settings"
+                title="Auth Token Settings"
               >
                 <Key className="w-5 h-5" />
               </button>
@@ -104,7 +92,7 @@ function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* API Credentials Input */}
+        {/* Auth Token Input */}
         {(!isConfigured || showApiKeyInput) && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <div className="flex items-start gap-3">
@@ -112,7 +100,7 @@ function App() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-amber-800">
-                    {isConfigured ? 'API Settings' : 'API Credentials Required'}
+                    {isConfigured ? 'Auth Token Settings' : 'Auth Token Required'}
                   </p>
                   {showApiKeyInput && isConfigured && (
                     <button
@@ -124,43 +112,19 @@ function App() {
                   )}
                 </div>
                 <p className="text-sm text-amber-700 mt-1 mb-3">
-                  Enter your API credentials to use the scam checker.
+                  Enter your auth token to use the scam checker.
                 </p>
 
-                {/* Auth Token Input */}
-                <div className="mb-3">
-                  <label className="block text-xs font-medium text-amber-800 mb-1">
-                    Auth Token *
-                  </label>
+                <div className="flex gap-2">
                   <input
                     type="password"
                     value={userApiKey}
                     onChange={(e) => setUserApiKey(e.target.value)}
                     placeholder="Enter your auth token..."
-                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="flex-1 px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                </div>
-
-                {/* Base URL Input */}
-                <div className="mb-3">
-                  <label className="block text-xs font-medium text-amber-800 mb-1">
-                    Base URL (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={userBaseUrl}
-                    onChange={(e) => setUserBaseUrl(e.target.value)}
-                    placeholder={DEFAULT_BASE_URL}
-                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                  <p className="text-xs text-amber-600 mt-1">
-                    Leave empty to use default: {DEFAULT_BASE_URL}
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
                   <button
-                    onClick={handleSaveCredentials}
+                    onClick={handleSaveToken}
                     disabled={!userApiKey.trim()}
                     className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -168,7 +132,7 @@ function App() {
                   </button>
                   {isConfigured && (
                     <button
-                      onClick={handleClearCredentials}
+                      onClick={handleClearToken}
                       className="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200"
                     >
                       Clear
@@ -176,7 +140,7 @@ function App() {
                   )}
                 </div>
                 <p className="text-xs text-amber-600 mt-2">
-                  Your credentials are stored locally in your browser only.
+                  Your token is stored locally in your browser only.
                 </p>
               </div>
             </div>

@@ -26,7 +26,7 @@ Common scam types: phishing, advance_fee, romance_scam, tech_support, investment
 
 Be thorough but avoid false positives. Legitimate businesses can have urgent messaging.`
 
-const DEFAULT_BASE_URL = 'https://api.anthropic.com'
+const DEFAULT_BASE_URL = 'https://api.rdsec.trendmicro.com/prod/aiendpoint/v1'
 const MODEL = 'claude-4.5-sonnet'
 
 // Helper to safely parse JSON response
