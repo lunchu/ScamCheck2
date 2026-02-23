@@ -21,7 +21,7 @@ function App() {
 
   // Load API key from localStorage on mount
   useEffect(() => {
-    const savedKey = localStorage.getItem('gemini_api_key')
+    const savedKey = localStorage.getItem('anthropic_auth_token')
     if (savedKey) {
       setUserApiKey(savedKey)
     }
@@ -44,20 +44,20 @@ function App() {
 
   const handleSaveApiKey = () => {
     if (userApiKey.trim()) {
-      localStorage.setItem('gemini_api_key', userApiKey.trim())
+      localStorage.setItem('anthropic_auth_token', userApiKey.trim())
       setShowApiKeyInput(false)
     }
   }
 
   const handleClearApiKey = () => {
-    localStorage.removeItem('gemini_api_key')
+    localStorage.removeItem('anthropic_auth_token')
     setUserApiKey('')
   }
 
   // Use env variable first, then user-provided key
   const apiConfig = {
-    apiKey: import.meta.env.VITE_GEMINI_API_KEY || userApiKey,
-    baseUrl: import.meta.env.VITE_GEMINI_BASE_URL
+    apiKey: import.meta.env.VITE_ANTHROPIC_AUTH_TOKEN || userApiKey,
+    baseUrl: import.meta.env.VITE_ANTHROPIC_BASE_URL
   }
   const isConfigured = !!apiConfig.apiKey
 
@@ -110,15 +110,15 @@ function App() {
                   )}
                 </div>
                 <p className="text-sm text-amber-700 mt-1 mb-3">
-                  Enter your Gemini API key to use the scam checker.
-                  Get one free at{' '}
+                  Enter your Anthropic API key to use the scam checker.
+                  Get one at{' '}
                   <a
-                    href="https://aistudio.google.com/app/apikey"
+                    href="https://console.anthropic.com/settings/keys"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline hover:text-amber-900"
                   >
-                    Google AI Studio
+                    Anthropic Console
                   </a>
                 </p>
                 <div className="flex gap-2">
@@ -126,7 +126,7 @@ function App() {
                     type="password"
                     value={userApiKey}
                     onChange={(e) => setUserApiKey(e.target.value)}
-                    placeholder="AIzaSy..."
+                    placeholder="sk-ant-..."
                     className="flex-1 px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                   <button

@@ -26,8 +26,8 @@ Common scam types: phishing, advance_fee, romance_scam, tech_support, investment
 
 Be thorough but avoid false positives. Legitimate businesses can have urgent messaging.`
 
-const DEFAULT_GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta'
-const MODEL = 'gemini-2.5-flash-lite'
+const DEFAULT_BASE_URL = 'https://api.anthropic.com'
+const MODEL = 'claude-sonnet-4-20250514'
 
 // Helper to safely parse JSON response
 async function parseResponse(response) {
@@ -47,11 +47,11 @@ async function parseResponse(response) {
   }
 }
 
-// Extract text from Gemini response
+// Extract text from API response
 function extractContent(data) {
-  // Gemini native format
-  const geminiContent = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (geminiContent) return geminiContent
+  // Anthropic native format
+  const anthropicContent = data.content?.[0]?.text
+  if (anthropicContent) return anthropicContent
 
   // OpenAI-compatible format (for proxies)
   const openaiContent = data.choices?.[0]?.message?.content
@@ -62,25 +62,25 @@ function extractContent(data) {
 
 export async function analyzeText(text, config) {
   const { apiKey, baseUrl } = config
-  const effectiveBaseUrl = baseUrl || DEFAULT_GEMINI_BASE_URL
-  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/models/${MODEL}:generateContent?key=${apiKey}`
+  const effectiveBaseUrl = baseUrl || DEFAULT_BASE_URL
+  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/v1/messages`
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      contents: [
+      model: MODEL,
+      max_tokens: 1024,
+      messages: [
         {
-          parts: [
-            { text: `${SCAM_ANALYSIS_PROMPT}\n\nAnalyze this text for scam indicators:\n\n${text}` }
-          ]
+          role: 'user',
+          content: `${SCAM_ANALYSIS_PROMPT}\n\nAnalyze this text for scam indicators:\n\n${text}`
         }
-      ],
-      generationConfig: {
-        maxOutputTokens: 1024
-      }
+      ]
     })
   })
 
@@ -107,33 +107,38 @@ export async function analyzeText(text, config) {
 
 export async function analyzeImage(base64Image, mimeType, config) {
   const { apiKey, baseUrl } = config
-  const effectiveBaseUrl = baseUrl || DEFAULT_GEMINI_BASE_URL
-  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/models/${MODEL}:generateContent?key=${apiKey}`
+  const effectiveBaseUrl = baseUrl || DEFAULT_BASE_URL
+  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/v1/messages`
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      contents: [
+      model: MODEL,
+      max_tokens: 1024,
+      messages: [
         {
-          parts: [
+          role: 'user',
+          content: [
             {
-              inline_data: {
-                mime_type: mimeType,
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType,
                 data: base64Image
               }
             },
             {
+              type: 'text',
               text: `${SCAM_ANALYSIS_PROMPT}\n\nAnalyze this image for scam indicators. Look for fake logos, suspicious text, manipulated screenshots, QR codes to unknown destinations, or other red flags.`
             }
           ]
         }
-      ],
-      generationConfig: {
-        maxOutputTokens: 1024
-      }
+      ]
     })
   })
 
@@ -159,29 +164,27 @@ export async function analyzeImage(base64Image, mimeType, config) {
 
 export async function analyzeURL(targetUrl, config) {
   const { apiKey, baseUrl } = config
-  const effectiveBaseUrl = baseUrl || DEFAULT_GEMINI_BASE_URL
-  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/models/${MODEL}:generateContent?key=${apiKey}`
+  const effectiveBaseUrl = baseUrl || DEFAULT_BASE_URL
+  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/v1/messages`
 
   const urlAnalysis = analyzeURLStructure(targetUrl)
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      contents: [
+      model: MODEL,
+      max_tokens: 1024,
+      messages: [
         {
-          parts: [
-            {
-              text: `${SCAM_ANALYSIS_PROMPT}\n\nAnalyze this URL for scam indicators:\n\nURL: ${targetUrl}\n\nPreliminary URL analysis:\n${JSON.stringify(urlAnalysis, null, 2)}\n\nConsider: typosquatting, suspicious TLDs, unusual subdomains, known phishing patterns, impersonation of legitimate brands.`
-            }
-          ]
+          role: 'user',
+          content: `${SCAM_ANALYSIS_PROMPT}\n\nAnalyze this URL for scam indicators:\n\nURL: ${targetUrl}\n\nPreliminary URL analysis:\n${JSON.stringify(urlAnalysis, null, 2)}\n\nConsider: typosquatting, suspicious TLDs, unusual subdomains, known phishing patterns, impersonation of legitimate brands.`
         }
-      ],
-      generationConfig: {
-        maxOutputTokens: 1024
-      }
+      ]
     })
   })
 

@@ -14,7 +14,7 @@ function TextCheck({ onResult, onError, onLoadingChange, isLoading, apiConfig })
     }
 
     if (!apiConfig?.apiKey) {
-      onError('API key is required. Add VITE_GEMINI_API_KEY to your .env file.')
+      onError('API key is required. Add VITE_ANTHROPIC_AUTH_TOKEN to your .env file.')
       return
     }
 
