@@ -11,19 +11,26 @@ const tabs = [
   { id: 'url', label: 'URL', icon: Link, description: 'Verify websites, links' },
 ]
 
+const DEFAULT_BASE_URL = 'https://api.anthropic.com'
+
 function App() {
   const [activeTab, setActiveTab] = useState('text')
   const [result, setResult] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [userApiKey, setUserApiKey] = useState('')
+  const [userBaseUrl, setUserBaseUrl] = useState('')
   const [showApiKeyInput, setShowApiKeyInput] = useState(false)
 
-  // Load API key from localStorage on mount
+  // Load credentials from localStorage on mount
   useEffect(() => {
     const savedKey = localStorage.getItem('anthropic_auth_token')
+    const savedUrl = localStorage.getItem('anthropic_base_url')
     if (savedKey) {
       setUserApiKey(savedKey)
+    }
+    if (savedUrl) {
+      setUserBaseUrl(savedUrl)
     }
   }, [])
 
@@ -42,22 +49,29 @@ function App() {
     setError(null)
   }
 
-  const handleSaveApiKey = () => {
+  const handleSaveCredentials = () => {
     if (userApiKey.trim()) {
       localStorage.setItem('anthropic_auth_token', userApiKey.trim())
+      if (userBaseUrl.trim()) {
+        localStorage.setItem('anthropic_base_url', userBaseUrl.trim())
+      } else {
+        localStorage.removeItem('anthropic_base_url')
+      }
       setShowApiKeyInput(false)
     }
   }
 
-  const handleClearApiKey = () => {
+  const handleClearCredentials = () => {
     localStorage.removeItem('anthropic_auth_token')
+    localStorage.removeItem('anthropic_base_url')
     setUserApiKey('')
+    setUserBaseUrl('')
   }
 
-  // Use env variable first, then user-provided key
+  // Use user-provided credentials only
   const apiConfig = {
-    apiKey: import.meta.env.VITE_ANTHROPIC_AUTH_TOKEN || userApiKey,
-    baseUrl: import.meta.env.VITE_ANTHROPIC_BASE_URL
+    apiKey: userApiKey,
+    baseUrl: userBaseUrl || DEFAULT_BASE_URL
   }
   const isConfigured = !!apiConfig.apiKey
 
@@ -80,7 +94,7 @@ function App() {
               <button
                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-                title="API Key Settings"
+                title="API Settings"
               >
                 <Key className="w-5 h-5" />
               </button>
@@ -90,7 +104,7 @@ function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* API Key Input */}
+        {/* API Credentials Input */}
         {(!isConfigured || showApiKeyInput) && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <div className="flex items-start gap-3">
@@ -98,7 +112,7 @@ function App() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-amber-800">
-                    {isConfigured ? 'API Key Settings' : 'API Key Required'}
+                    {isConfigured ? 'API Settings' : 'API Credentials Required'}
                   </p>
                   {showApiKeyInput && isConfigured && (
                     <button
@@ -110,27 +124,43 @@ function App() {
                   )}
                 </div>
                 <p className="text-sm text-amber-700 mt-1 mb-3">
-                  Enter your Anthropic API key to use the scam checker.
-                  Get one at{' '}
-                  <a
-                    href="https://console.anthropic.com/settings/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-amber-900"
-                  >
-                    Anthropic Console
-                  </a>
+                  Enter your API credentials to use the scam checker.
                 </p>
-                <div className="flex gap-2">
+
+                {/* Auth Token Input */}
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-amber-800 mb-1">
+                    Auth Token *
+                  </label>
                   <input
                     type="password"
                     value={userApiKey}
                     onChange={(e) => setUserApiKey(e.target.value)}
-                    placeholder="sk-ant-..."
-                    className="flex-1 px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="Enter your auth token..."
+                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
+                </div>
+
+                {/* Base URL Input */}
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-amber-800 mb-1">
+                    Base URL (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={userBaseUrl}
+                    onChange={(e) => setUserBaseUrl(e.target.value)}
+                    placeholder={DEFAULT_BASE_URL}
+                    className="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <p className="text-xs text-amber-600 mt-1">
+                    Leave empty to use default: {DEFAULT_BASE_URL}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
                   <button
-                    onClick={handleSaveApiKey}
+                    onClick={handleSaveCredentials}
                     disabled={!userApiKey.trim()}
                     className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -138,7 +168,7 @@ function App() {
                   </button>
                   {isConfigured && (
                     <button
-                      onClick={handleClearApiKey}
+                      onClick={handleClearCredentials}
                       className="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200"
                     >
                       Clear
@@ -146,7 +176,7 @@ function App() {
                   )}
                 </div>
                 <p className="text-xs text-amber-600 mt-2">
-                  Your key is stored locally in your browser only.
+                  Your credentials are stored locally in your browser only.
                 </p>
               </div>
             </div>

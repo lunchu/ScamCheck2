@@ -14,7 +14,7 @@ function TextCheck({ onResult, onError, onLoadingChange, isLoading, apiConfig })
     }
 
     if (!apiConfig?.apiKey) {
-      onError('API key is required. Add VITE_ANTHROPIC_AUTH_TOKEN to your .env file.')
+      onError('Please enter your API credentials first.')
       return
     }
 
