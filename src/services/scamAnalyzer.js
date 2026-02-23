@@ -27,7 +27,7 @@ Common scam types: phishing, advance_fee, romance_scam, tech_support, investment
 Be thorough but avoid false positives. Legitimate businesses can have urgent messaging.`
 
 const DEFAULT_BASE_URL = 'https://api.anthropic.com'
-const MODEL = 'claude-sonnet-4-20250514'
+const MODEL = 'claude-4.5-sonnet'
 
 // Helper to safely parse JSON response
 async function parseResponse(response) {
@@ -49,13 +49,13 @@ async function parseResponse(response) {
 
 // Extract text from API response
 function extractContent(data) {
-  // Anthropic native format
-  const anthropicContent = data.content?.[0]?.text
-  if (anthropicContent) return anthropicContent
-
   // OpenAI-compatible format (for proxies)
   const openaiContent = data.choices?.[0]?.message?.content
   if (openaiContent) return openaiContent
+
+  // Anthropic native format
+  const anthropicContent = data.content?.[0]?.text
+  if (anthropicContent) return anthropicContent
 
   return null
 }
@@ -63,14 +63,13 @@ function extractContent(data) {
 export async function analyzeText(text, config) {
   const { apiKey, baseUrl } = config
   const effectiveBaseUrl = baseUrl || DEFAULT_BASE_URL
-  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/v1/messages`
+  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/chat/completions`
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
       model: MODEL,
@@ -108,14 +107,13 @@ export async function analyzeText(text, config) {
 export async function analyzeImage(base64Image, mimeType, config) {
   const { apiKey, baseUrl } = config
   const effectiveBaseUrl = baseUrl || DEFAULT_BASE_URL
-  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/v1/messages`
+  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/chat/completions`
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
       model: MODEL,
@@ -125,11 +123,9 @@ export async function analyzeImage(base64Image, mimeType, config) {
           role: 'user',
           content: [
             {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mimeType,
-                data: base64Image
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType};base64,${base64Image}`
               }
             },
             {
@@ -165,7 +161,7 @@ export async function analyzeImage(base64Image, mimeType, config) {
 export async function analyzeURL(targetUrl, config) {
   const { apiKey, baseUrl } = config
   const effectiveBaseUrl = baseUrl || DEFAULT_BASE_URL
-  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/v1/messages`
+  const url = `${effectiveBaseUrl.replace(/\/+$/, '')}/chat/completions`
 
   const urlAnalysis = analyzeURLStructure(targetUrl)
 
@@ -173,8 +169,7 @@ export async function analyzeURL(targetUrl, config) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
       model: MODEL,
